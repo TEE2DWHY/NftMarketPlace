@@ -5,11 +5,26 @@ error NftMarketPlace__PriceCannotBeZero();
 error NftMarketPlace__NftNotApprovedByMarketPlace();
 error NftMarketPlace__NftAlreadyListed(address nftAddress, uint256 tokenId);
 error NftMarketPlace__NotOwner(address owner);
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+error NftMarketPlace__NotListed(address nftAddress, uint256 tokenId);
+error NftMarketPlace__PriceNotMet(
+    address nftAddress,
+    uint256 tokenId,
+    uint256 price
+);
 
-contract NftMarketPlace {
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
+contract NftMarketPlace is ReentrancyGuard {
     event ItemListed(
         address indexed seller,
+        address indexed nftAddress,
+        uint256 indexed tokenId,
+        uint256 price
+    );
+
+    event ItemBought(
+        address indexed buyer,
         address indexed nftAddress,
         uint256 indexed tokenId,
         uint256 price
@@ -22,6 +37,8 @@ contract NftMarketPlace {
         address seller;
     }
     mapping(address => mapping(uint256 => Listing)) private s_listings;
+    // seller => amount
+    mapping(address => uint256) private s_proceeds;
 
     /*
      * @notice Method for listing your NFT on the marketplace
@@ -55,16 +72,23 @@ contract NftMarketPlace {
     // buy item
     function buyItem(
         address nftAddress,
-        address seller,
-        address spender,
         uint256 tokenId
-    ) external payable isOwer(nftAddress, tokenId, spender) {
-        spender = address(this);
-        ERC721URIStorage nft = ERC721URIStorage(nftAddress);
-        if (nft.getApproved(tokenId) != spender) {
-            revert NftMarketPlace__NftNotApprovedByMarketPlace();
+    ) external payable nonReentrant isListed(nftAddress, tokenId) {
+        Listing memory listedItem = s_listings[nftAddress][tokenId];
+        if (listedItem.price < msg.value) {
+            revert NftMarketPlace__PriceNotMet(
+                nftAddress,
+                tokenId,
+                listedItem.price
+            );
         }
-        nft.transferFrom(seller, spender, tokenId);
+        s_proceeds[listedItem.seller] +=
+            s_proceeds[listedItem.seller] +
+            msg.value;
+        ERC721URIStorage nft = ERC721URIStorage(nftAddress);
+        nft.safeTransferFrom(listedItem.seller, msg.sender, tokenId);
+        emit ItemBought(msg.sender, nftAddress, tokenId, listedItem.price);
+        delete (s_listings[nftAddress][tokenId]);
     }
 
     // cancel item lisitng
@@ -90,8 +114,16 @@ contract NftMarketPlace {
         address owner
     ) {
         Listing memory existingListing = s_listings[nftAddress][tokenId];
-        if (existingListing.price < 0) {
+        if (existingListing.price > 0) {
             revert NftMarketPlace__NftAlreadyListed(nftAddress, tokenId);
+        }
+        _;
+    }
+    // check if NFT is already listed
+    modifier isListed(address nftAddress, uint256 tokenId) {
+        Listing memory listed = s_listings[nftAddress][tokenId];
+        if (listed.price <= 0) {
+            revert NftMarketPlace__NotListed(nftAddress, tokenId);
         }
         _;
     }
