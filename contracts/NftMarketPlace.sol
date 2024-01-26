@@ -162,6 +162,23 @@ contract NftMarketPlace is ReentrancyGuard {
         }
     }
 
+    // Getters
+    function getListing(
+        address nftAddress,
+        uint256 tokenId
+    ) external view returns (Listing memory) {
+        // Listing memory lisitng = s_listings[nftAddress][tokenId];
+        // return lisitng;
+        return s_listings[nftAddress][tokenId]; // more gas effective
+    }
+
+    function getProceed(address seller) external view returns (uint256) {
+        // uint256 proceed = s_proceeds[msg.sender]; //  It always returns the proceeds associated with the caller of the function, not the specified seller parameter.
+        // return proceed;
+        return s_proceeds[seller]; // returns the proceeds of a given address (the seller in this casse)
+    }
+
+    // Modifiers
     // check if NFT is not already listed
     modifier notListed(
         address nftAddress,
