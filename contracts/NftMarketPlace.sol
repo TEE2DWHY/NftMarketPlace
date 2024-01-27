@@ -67,7 +67,7 @@ contract NftMarketPlace is ReentrancyGuard {
     )
         external
         notListed(nftAddress, tokenId, msg.sender)
-        isOwer(nftAddress, tokenId, msg.sender)
+        isOwner(nftAddress, tokenId, msg.sender)
     {
         if (price <= 0) {
             revert NftMarketPlace__PriceCannotBeZero();
@@ -114,6 +114,9 @@ contract NftMarketPlace is ReentrancyGuard {
      *notice Method to cancel a listed item
      @spender: Address of the  NFT Owner
      @toekenId: Token Id of the NFT
+     @dev, this function cancels and already listed NFT,
+     it checks if an nft is already listed and ensures that only the owner can cancel the listing
+     of an item. 
      */
     // cancel item lisitng
     function cancelItem(
@@ -122,7 +125,7 @@ contract NftMarketPlace is ReentrancyGuard {
         uint256 tokenId
     )
         external
-        isOwer(nftAddress, tokenId, msg.sender)
+        isOwner(nftAddress, tokenId, msg.sender)
         isListed(nftAddress, tokenId)
     {
         spender = address(this);
@@ -140,7 +143,7 @@ contract NftMarketPlace is ReentrancyGuard {
     )
         external
         payable
-        isOwer(nftAddress, tokenId, msg.sender)
+        isOwner(nftAddress, tokenId, msg.sender)
         isListed(nftAddress, tokenId)
     {
         // Listing memory updatedaList = s_listings[nftAddress][tokenId];
@@ -185,6 +188,13 @@ contract NftMarketPlace is ReentrancyGuard {
         return s_listings[nftAddress][tokenId].price;
     }
 
+    function getOwner(
+        address nftAddress,
+        uint256 tokenId
+    ) external view returns (address) {
+        return s_listings[nftAddress][tokenId].seller;
+    }
+
     // Modifiers
     // check if NFT is not already listed
     modifier notListed(
@@ -208,7 +218,7 @@ contract NftMarketPlace is ReentrancyGuard {
     }
 
     // check if NFT is owned by seller
-    modifier isOwer(
+    modifier isOwner(
         address nftAddress,
         uint256 tokenId,
         address spender

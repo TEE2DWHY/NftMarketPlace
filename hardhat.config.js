@@ -3,6 +3,7 @@ require("dotenv").config();
 
 const GOERLI_URL = process.env.GOERLI_URL;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const ETHERSCAN_APIKEY = process.env.ETHERSCAN_APIKEY;
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: "0.8.20",
@@ -17,5 +18,8 @@ module.exports = {
       accounts: [PRIVATE_KEY],
       chainId: 5,
     },
+  },
+  etherscan: {
+    apiKey: ETHERSCAN_APIKEY,
   },
 };
