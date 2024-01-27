@@ -37,7 +37,7 @@ const { developmentChains } = require("../helper-hardhat-config");
             owner,
             "Only the owner should be able to list items."
           );
-          assert.equal(price.toString(), "0", "NFT is not listed.");
+          assert.equal(price.toString(), "0", "NFT is listed.");
         });
       });
     });
