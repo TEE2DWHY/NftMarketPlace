@@ -178,6 +178,13 @@ contract NftMarketPlace is ReentrancyGuard {
         return s_proceeds[seller]; // returns the proceeds of a given address (the seller in this casse)
     }
 
+    function getPrice(
+        address nftAddress,
+        uint256 tokenId
+    ) external view returns (uint256) {
+        return s_listings[nftAddress][tokenId].price;
+    }
+
     // Modifiers
     // check if NFT is not already listed
     modifier notListed(
