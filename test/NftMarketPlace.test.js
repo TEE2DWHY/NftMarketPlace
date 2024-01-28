@@ -1,10 +1,11 @@
 const { assert } = require("chai");
 const { ethers, network } = require("hardhat");
 const { developmentChains } = require("../helper-hardhat-config");
+const { any } = require("hardhat/internal/core/params/argumentTypes");
 
 !developmentChains.includes(network.name)
   ? describe.skip
-  : describe("NftMarketPlace: listItem Function", () => {
+  : describe("NftMarketPlace", () => {
       let nftMarketPlace;
       let nftContract;
       let owner;
@@ -26,7 +27,7 @@ const { developmentChains } = require("../helper-hardhat-config");
 
         // Mint an NFT and approve the market contract
         await nftContract.mint(owner.address, 1);
-        await nftContract.connect(owner).approve(nftMarketPlace.target, 1);
+        await nftContract.connect(owner).approve(nftMarketPlace.target, 1); //The connect method in ethers.js is used to create a new contract instance that is connected to a specific signer.
       });
 
       describe("List Item", () => {
@@ -95,6 +96,34 @@ const { developmentChains } = require("../helper-hardhat-config");
               .connect(buyer)
               .listItem(nftContract.target, 3, ethers.parseEther("1.0")),
             "NftMarketPlace__NotOwner"
+          );
+        });
+      });
+
+      describe("Buy Item", () => {
+        beforeEach(async () => {
+          await nftMarketPlace
+            .connect(owner)
+            .listItem(nftContract.target, 1, ethers.parseEther("1"));
+        });
+        it("Ensure that item is listed by the owner", async () => {
+          const listing = await nftMarketPlace.getListing(
+            nftContract.target,
+            1
+          );
+          const seller = listing.seller;
+          assert.equal(seller, owner.address, "Not Owner");
+        });
+        it("Buyers price must match the cost of NFT", async () => {
+          const listing = await nftMarketPlace.getListing(
+            nftContract.target,
+            1
+          );
+          await nftMarketPlace.connect(buyer).buyItem(nftContract.target, 1);
+          const buyerBalance = await ethers.provider.getBalance(buyer.address);
+          assert.isTrue(
+            buyerBalance.toString() >= listing.price.toString(),
+            "Price Not Met"
           );
         });
       });
