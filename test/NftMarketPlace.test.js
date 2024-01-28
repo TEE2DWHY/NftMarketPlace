@@ -31,7 +31,7 @@ const { any } = require("hardhat/internal/core/params/argumentTypes");
       });
 
       describe("List Item", () => {
-        it("should list an NFT for sale", async () => {
+        it("should list an item for sale", async () => {
           const price = ethers.parseEther("1.0");
 
           // Call listItem function
@@ -57,7 +57,7 @@ const { any } = require("hardhat/internal/core/params/argumentTypes");
           );
         });
 
-        it("should revert if NFT is not approved", async () => {
+        it("should revert if item is not approved", async () => {
           // Mint a new NFT without approving the market contract
           await nftContract.mint(owner.address, 2);
 
@@ -70,7 +70,7 @@ const { any } = require("hardhat/internal/core/params/argumentTypes");
           );
         });
 
-        it("should revert if NFT is already listed", async () => {
+        it("should revert if item is already listed", async () => {
           // List an NFT
           await nftMarketPlace
             .connect(owner)
@@ -106,6 +106,10 @@ const { any } = require("hardhat/internal/core/params/argumentTypes");
             .connect(owner)
             .listItem(nftContract.target, 1, ethers.parseEther("1"));
         });
+        it("Check if item is up for sale", async () => {
+          const price = await nftMarketPlace.getPrice(nftContract.target, 1);
+          assert.isTrue(price > 0, "Item is not listed.");
+        });
         it("Ensure that item is listed by the owner", async () => {
           const listing = await nftMarketPlace.getListing(
             nftContract.target,
@@ -114,7 +118,7 @@ const { any } = require("hardhat/internal/core/params/argumentTypes");
           const seller = listing.seller;
           assert.equal(seller, owner.address, "Not Owner");
         });
-        it("Buyers price must match the cost of NFT", async () => {
+        it("Buyers price must match the cost of item", async () => {
           const listing = await nftMarketPlace.getListing(
             nftContract.target,
             1
@@ -126,10 +130,14 @@ const { any } = require("hardhat/internal/core/params/argumentTypes");
             "Price Not Met"
           );
         });
-        it("Check if buyer is now the owner of the NFT", async () => {
+        it("Check if buyer is now the owner", async () => {
           await nftMarketPlace.connect(buyer).buyItem(nftContract.target, 1);
           const owner = await nftMarketPlace.getOwner(nftContract.target, 1);
-          assert.equal(buyer.address, owner);
+          assert.equal(
+            buyer.address,
+            owner,
+            "Ownership Transfer to Buyer Failed."
+          );
         });
       });
     });
