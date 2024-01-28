@@ -192,7 +192,8 @@ contract NftMarketPlace is ReentrancyGuard {
         address nftAddress,
         uint256 tokenId
     ) external view returns (address) {
-        return s_listings[nftAddress][tokenId].seller;
+        ERC721URIStorage nft = ERC721URIStorage(nftAddress);
+        return nft.ownerOf(tokenId);
     }
 
     // Modifiers

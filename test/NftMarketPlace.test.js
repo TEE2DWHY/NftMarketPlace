@@ -126,5 +126,10 @@ const { any } = require("hardhat/internal/core/params/argumentTypes");
             "Price Not Met"
           );
         });
+        it("Check if buyer is now the owner of the NFT", async () => {
+          await nftMarketPlace.connect(buyer).buyItem(nftContract.target, 1);
+          const owner = await nftMarketPlace.getOwner(nftContract.target, 1);
+          assert.equal(buyer.address, owner);
+        });
       });
     });
