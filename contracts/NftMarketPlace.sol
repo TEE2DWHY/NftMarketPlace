@@ -101,7 +101,7 @@ contract NftMarketPlace is ReentrancyGuard {
                 listedItem.price
             );
         }
-        s_proceeds[listedItem.seller] +=
+        s_proceeds[listedItem.seller] =
             s_proceeds[listedItem.seller] +
             msg.value;
         delete (s_listings[nftAddress][tokenId]);
@@ -163,6 +163,15 @@ contract NftMarketPlace is ReentrancyGuard {
         if (!success) {
             revert NftMarketPlace__TransferFailed();
         }
+    }
+
+    // simulate withdrawal
+    function simulateWithdraw(address seller) external {
+        uint256 proceeds = s_proceeds[seller];
+        require(proceeds > 0, "NftMarketPlace_NoProceeds");
+
+        // Simulate transfer by updating state variables
+        s_proceeds[seller] = 0;
     }
 
     // Getters

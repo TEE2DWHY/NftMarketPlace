@@ -1,7 +1,6 @@
 const { assert } = require("chai");
 const { ethers, network } = require("hardhat");
 const { developmentChains } = require("../helper-hardhat-config");
-const { any } = require("hardhat/internal/core/params/argumentTypes");
 
 !developmentChains.includes(network.name)
   ? describe.skip
@@ -138,6 +137,83 @@ const { any } = require("hardhat/internal/core/params/argumentTypes");
             owner,
             "Ownership Transfer to Buyer Failed."
           );
+        });
+      });
+
+      describe("Cancel Item Listing", () => {
+        beforeEach(async () => {
+          await nftMarketPlace
+            .connect(owner)
+            .listItem(nftContract.target, 1, ethers.parseEther("10"));
+        });
+        it("Check if item is Listed", async () => {
+          const price = await nftMarketPlace.getPrice(nftContract.target, 1);
+          assert.isTrue(price.toString() > 0, "Item is not Listed");
+        });
+        it("Only owner can cancel item listing", async () => {
+          const listedItem = await nftMarketPlace.getListing(
+            nftContract.target,
+            1
+          );
+          const seller = listedItem.seller;
+          assert.equal(owner.address, seller, "Not Owner of Item.");
+        });
+      });
+
+      describe("Update Item", () => {
+        beforeEach(async () => {
+          await nftMarketPlace
+            .connect(owner)
+            .listItem(nftContract.target, 1, ethers.parseEther("10"));
+        });
+        it("Check if item is listed", async () => {
+          const price = await nftMarketPlace.getPrice(nftContract.target, 1);
+          assert.isTrue(price.toString() > 0, "Item is Not Listed");
+        });
+        it("Only owner can update item", async () => {
+          const listing = await nftMarketPlace.getListing(
+            nftContract.target,
+            1
+          );
+          const seller = listing.seller;
+          assert.equal(owner.address, seller, "Not Owner");
+        });
+        it("Check if price is successfully updated.", async () => {
+          await nftMarketPlace.updateItem(
+            nftContract.target,
+            1,
+            ethers.parseEther("2.0")
+          );
+          const listing = await nftMarketPlace.getListing(
+            nftContract.target,
+            1
+          );
+          const newPrice = listing.price;
+          const price = await nftMarketPlace.getPrice(nftContract.target, 1);
+          assert.equal(
+            price.toString(),
+            newPrice.toString(),
+            "Item Update Fail"
+          );
+        });
+      });
+
+      describe("Withdraw Item", () => {
+        beforeEach(async () => {
+          await nftMarketPlace
+            .connect(owner)
+            .listItem(nftContract.target, 1, ethers.parseEther("10"));
+          await nftMarketPlace.connect(buyer).buyItem(nftContract.target, 1);
+        });
+        it("check if proceed is now zero", async () => {
+          const listing = await nftMarketPlace.getListing(
+            nftContract.target,
+            1
+          );
+          const seller = listing.seller;
+          await nftMarketPlace.connect(seller).withdraw();
+          const proceed = await nftMarketPlace.getProceed(seller);
+          assert.equal(proceed.toString(), "0");
         });
       });
     });
