@@ -29,7 +29,7 @@ const { developmentChains } = require("../helper-hardhat-config");
         await nftContract.connect(owner).approve(nftMarketPlace.target, 1); //The connect method in ethers.js is used to create a new contract instance that is connected to a specific signer.
       });
 
-      describe("List Item", () => {
+      describe("listItem", () => {
         it("should list an item for sale", async () => {
           const price = ethers.parseEther("1.0");
 
@@ -99,7 +99,7 @@ const { developmentChains } = require("../helper-hardhat-config");
         });
       });
 
-      describe("Buy Item", () => {
+      describe("buyItem", () => {
         beforeEach(async () => {
           await nftMarketPlace
             .connect(owner)
@@ -140,7 +140,7 @@ const { developmentChains } = require("../helper-hardhat-config");
         });
       });
 
-      describe("Cancel Item Listing", () => {
+      describe("cancelItem", () => {
         beforeEach(async () => {
           await nftMarketPlace
             .connect(owner)
@@ -160,7 +160,7 @@ const { developmentChains } = require("../helper-hardhat-config");
         });
       });
 
-      describe("Update Item", () => {
+      describe("updateItem", () => {
         beforeEach(async () => {
           await nftMarketPlace
             .connect(owner)
@@ -177,6 +177,15 @@ const { developmentChains } = require("../helper-hardhat-config");
           );
           const seller = listing.seller;
           assert.equal(owner.address, seller, "Not Owner");
+        });
+        it("Updated price cannot be zero", async () => {
+          await nftMarketPlace.updateItem(
+            nftContract.target,
+            1,
+            ethers.parseEther("3")
+          );
+          const price = await nftMarketPlace.getPrice(nftContract.target, 1);
+          assert.isTrue(price > 0, "Price Cannot be Zero.");
         });
         it("Check if price is successfully updated.", async () => {
           await nftMarketPlace.updateItem(
@@ -198,22 +207,14 @@ const { developmentChains } = require("../helper-hardhat-config");
         });
       });
 
-      describe("Withdraw Item", () => {
-        beforeEach(async () => {
-          await nftMarketPlace
-            .connect(owner)
-            .listItem(nftContract.target, 1, ethers.parseEther("10"));
-          await nftMarketPlace.connect(buyer).buyItem(nftContract.target, 1);
-        });
-        it("check if proceed is now zero", async () => {
-          const listing = await nftMarketPlace.getListing(
-            nftContract.target,
-            1
-          );
-          const seller = listing.seller;
-          await nftMarketPlace.connect(seller).withdraw();
-          const proceed = await nftMarketPlace.getProceed(seller);
-          assert.equal(proceed.toString(), "0");
-        });
+      describe("withdrawItem", async () => {});
+      it("check if proceed is now zero", async () => {
+        await nftMarketPlace
+          .connect(owner)
+          .listItem(nftContract.target, 1, ethers.parseEther("10"));
+        await nftMarketPlace.connect(buyer).buyItem(nftContract.target, 1);
+        await nftMarketPlace.connect(owner).withdrawProceeds();
+        const proceed = await nftMarketPlace.getProceed(owner.address);
+        assert.equal(proceed.toString(), "0");
       });
     });

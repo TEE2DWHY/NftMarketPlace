@@ -153,25 +153,14 @@ contract NftMarketPlace is ReentrancyGuard {
     }
 
     // withdraw proceeds
-    function withdraw() external {
+    function withdrawProceeds() external {
         uint256 proceeds = s_proceeds[msg.sender];
         if (proceeds <= 0) {
             revert NftMarketPlace_NoProceeds();
         }
-        proceeds = 0;
+        s_proceeds[msg.sender] = 0;
         (bool success, ) = payable(msg.sender).call{value: proceeds}("");
-        if (!success) {
-            revert NftMarketPlace__TransferFailed();
-        }
-    }
-
-    // simulate withdrawal
-    function simulateWithdraw(address seller) external {
-        uint256 proceeds = s_proceeds[seller];
-        require(proceeds > 0, "NftMarketPlace_NoProceeds");
-
-        // Simulate transfer by updating state variables
-        s_proceeds[seller] = 0;
+        require(success, "Transfer failed");
     }
 
     // Getters
