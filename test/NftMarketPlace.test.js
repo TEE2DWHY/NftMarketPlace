@@ -211,7 +211,7 @@ const { developmentChains } = require("../helper-hardhat-config");
         });
       });
 
-      describe("withdrawProceeds", function () {
+      describe("withdrawProceeds", async () => {
         it("Check if proceed is now zero after withdrawal", async function () {
           await nftMarketPlace
             .connect(owner)
