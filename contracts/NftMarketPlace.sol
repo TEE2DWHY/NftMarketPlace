@@ -94,16 +94,14 @@ contract NftMarketPlace is ReentrancyGuard {
         uint256 tokenId
     ) external payable nonReentrant isListed(nftAddress, tokenId) {
         Listing memory listedItem = s_listings[nftAddress][tokenId];
-        if (listedItem.price < msg.value) {
+        if (msg.value != listedItem.price) {
             revert NftMarketPlace__PriceNotMet(
                 nftAddress,
                 tokenId,
                 listedItem.price
             );
         }
-        s_proceeds[listedItem.seller] =
-            s_proceeds[listedItem.seller] +
-            msg.value;
+        s_proceeds[listedItem.seller] += msg.value;
         delete (s_listings[nftAddress][tokenId]);
         ERC721URIStorage nft = ERC721URIStorage(nftAddress);
         nft.safeTransferFrom(listedItem.seller, msg.sender, tokenId);

@@ -1,4 +1,4 @@
-const { assert } = require("chai");
+const { assert, expect } = require("chai");
 const { ethers, network } = require("hardhat");
 const { developmentChains } = require("../helper-hardhat-config");
 
@@ -19,7 +19,6 @@ const { developmentChains } = require("../helper-hardhat-config");
         );
         nftMarketPlace = await NftMarketPlace.deploy();
         nftMarketPlace.waitForDeployment(6);
-
         const ERC721Mock = await ethers.getContractFactory("MockERC721");
         nftContract = await ERC721Mock.deploy("MyNFT", "NFT");
         nftMarketPlace.waitForDeployment(6);
@@ -122,15 +121,20 @@ const { developmentChains } = require("../helper-hardhat-config");
             nftContract.target,
             1
           );
-          await nftMarketPlace.connect(buyer).buyItem(nftContract.target, 1);
-          const buyerBalance = await ethers.provider.getBalance(buyer.address);
-          assert.isTrue(
-            buyerBalance.toString() >= listing.price.toString(),
+          const tx = await nftMarketPlace
+            .connect(buyer)
+            .buyItem(nftContract.target, 1, { value: ethers.parseEther("1") });
+          const amountSent = tx.value;
+          assert.equal(
+            amountSent.toString(),
+            listing.price.toString(),
             "Price Not Met"
           );
         });
         it("Check if buyer is now the owner", async () => {
-          await nftMarketPlace.connect(buyer).buyItem(nftContract.target, 1);
+          await nftMarketPlace
+            .connect(buyer)
+            .buyItem(nftContract.target, 1, { value: ethers.parseEther("1") });
           const owner = await nftMarketPlace.getOwner(nftContract.target, 1);
           assert.equal(
             buyer.address,
@@ -207,14 +211,17 @@ const { developmentChains } = require("../helper-hardhat-config");
         });
       });
 
-      describe("withdrawItem", async () => {});
-      it("check if proceed is now zero", async () => {
-        await nftMarketPlace
-          .connect(owner)
-          .listItem(nftContract.target, 1, ethers.parseEther("10"));
-        await nftMarketPlace.connect(buyer).buyItem(nftContract.target, 1);
-        await nftMarketPlace.connect(owner).withdrawProceeds();
-        const proceed = await nftMarketPlace.getProceed(owner.address);
-        assert.equal(proceed.toString(), "0");
+      describe("withdrawProceeds", function () {
+        it("Check if proceed is now zero after withdrawal", async function () {
+          await nftMarketPlace
+            .connect(owner)
+            .listItem(nftContract.target, 1, ethers.parseEther("10"));
+          await nftMarketPlace.connect(buyer).buyItem(nftContract.target, 1, {
+            value: ethers.parseEther("10"),
+          });
+          await nftMarketPlace.connect(owner).withdrawProceeds();
+          const newProceed = await nftMarketPlace.getProceed(owner.address);
+          assert.equal(newProceed, 0, "Proceeds not properly withdrawn");
+        });
       });
     });
