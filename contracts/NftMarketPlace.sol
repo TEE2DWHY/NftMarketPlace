@@ -11,7 +11,7 @@ error NftMarketPlace__PriceNotMet(
     uint256 tokenId,
     uint256 price
 );
-error NftMarketPlace_NoProceeds();
+error NftMarketPlace__NoProceeds();
 error NftMarketPlace__TransferFailed();
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
@@ -154,7 +154,7 @@ contract NftMarketPlace is ReentrancyGuard {
     function withdrawProceeds() external {
         uint256 proceeds = s_proceeds[msg.sender];
         if (proceeds <= 0) {
-            revert NftMarketPlace_NoProceeds();
+            revert NftMarketPlace__NoProceeds();
         }
         s_proceeds[msg.sender] = 0;
         (bool success, ) = payable(msg.sender).call{value: proceeds}("");
