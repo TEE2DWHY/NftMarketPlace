@@ -53,7 +53,6 @@ const { developmentChains } = require("../helper-hardhat-config");
             await nftMarketPlace.listItem(nftContract.target, tokenId, price)
           ).to.emit("ItemListed");
         });
-
         it("should revert if price is zero", async () => {
           // Call listItem function with zero price
           await assert.isRejected(
@@ -112,6 +111,16 @@ const { developmentChains } = require("../helper-hardhat-config");
             .connect(owner)
             .listItem(nftContract.target, tokenId, price);
         });
+        it("Revert if item is not listed", async () => {
+          await expect(
+            nftMarketPlace.connect(buyer).buyItem(nftContract.target, 2, {
+              value: price,
+            })
+          ).to.be.revertedWithCustomError(
+            nftMarketPlace,
+            "NftMarketPlace__NotListed"
+          );
+        });
         it("Check if item is up for sale", async () => {
           const price = await nftMarketPlace.getPrice(
             nftContract.target,
@@ -142,6 +151,16 @@ const { developmentChains } = require("../helper-hardhat-config");
             amountSent.toString(),
             listing.price.toString(),
             "Price Not Met"
+          );
+        });
+        it("Revert if price is not met", async () => {
+          await expect(
+            nftMarketPlace.connect(buyer).buyItem(nftContract.target, tokenId, {
+              value: ethers.parseEther("0"),
+            })
+          ).to.be.revertedWithCustomError(
+            nftMarketPlace,
+            "NftMarketPlace__PriceNotMet"
           );
         });
         it("Check if buyer is now the owner", async () => {
@@ -180,6 +199,13 @@ const { developmentChains } = require("../helper-hardhat-config");
           );
           const seller = listedItem.seller;
           assert.equal(owner.address, seller, "Not Owner of Item.");
+        });
+        it("Cancel a listed item", async () => {
+          expect(
+            await nftMarketPlace
+              .connect(owner)
+              .cancelItem(nftContract.target, nftMarketPlace.target, tokenId)
+          ).to.emit("CanceledItem");
         });
       });
 

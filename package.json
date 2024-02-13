@@ -9,6 +9,7 @@
     "chai": "^4.4.1",
     "dotenv": "^16.4.0",
     "ethereum-waffle": "^4.0.10",
-    "hardhat-deploy": "^0.11.45"
+    "hardhat-deploy": "^0.11.45",
+    "solidity-coverage": "^0.8.7"
   }
 }
