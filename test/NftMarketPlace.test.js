@@ -25,7 +25,7 @@ const { developmentChains } = require("../helper-hardhat-config");
         nftMarketPlace.waitForDeployment(6);
 
         // Mint an NFT and approve the market contract
-        await nftContract.mint(owner.address, tokenId);
+        await nftContract.mintNft(owner.address, tokenId);
         await nftContract
           .connect(owner)
           .approve(nftMarketPlace.target, tokenId); //The connect method in ethers.js is used to create a new contract instance that is connected to a specific signer.
@@ -65,7 +65,7 @@ const { developmentChains } = require("../helper-hardhat-config");
 
         it("should revert if item is not approved", async () => {
           // Mint a new NFT without approving the market contract
-          await nftContract.mint(owner.address, 2);
+          await nftContract.mintNft(owner.address, 2);
           // Try to list the NFT without approval
           await assert.isRejected(
             nftMarketPlace
@@ -92,7 +92,7 @@ const { developmentChains } = require("../helper-hardhat-config");
 
         it("should revert if the caller is not the owner of the NFT", async () => {
           // Mint an NFT and approve the market contract
-          await nftContract.mint(owner.address, 3);
+          await nftContract.mintNft(owner.address, 3);
           await nftContract.connect(owner).approve(nftMarketPlace.target, 3);
 
           // Try to list the NFT as a non-owner

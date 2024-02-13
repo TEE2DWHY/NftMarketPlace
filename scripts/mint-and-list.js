@@ -1,13 +1,40 @@
-const { ethers } = require("hardhat");
+const { ethers, network } = require("hardhat");
+const mintAndList = async () => {
+  try {
+    let owner;
+    let buyer;
+    const price = ethers.parseEther("1");
+    [owner, buyer] = await ethers.getSigners();
+    const marketPlaceContract = await ethers.getContractFactory(
+      "NftMarketPlace"
+    );
+    const deployedContract = await marketPlaceContract.deploy();
+    deployedContract.waitForDeployment(6);
+    const nftContract = await ethers.getContractFactory("MockERC721");
+    const deployedNft = await nftContract.deploy("DOG", "DNFT");
+    deployedNft.waitForDeployment(6);
+    console.log("Minting.....");
+    const mintTx = await deployedNft.mintNft(owner.address, 2);
+    const mintTxReceipt = await mintTx.wait(1);
+    const tokenId = mintTxReceipt.logs[1].args.tokenId.toString();
+    console.log("Minted✅");
+    console.log("Approving....");
+    const approvalTx = await deployedNft.approveNft(
+      deployedContract.target,
+      tokenId
+    );
+    await approvalTx.wait(1);
+    console.log("Approved✅");
+    console.log("Listing....");
+    const listedItem = await deployedContract
+      .connect(owner)
+      .listItem(deployedNft.target, tokenId, price);
+    await listedItem.wait(1);
+    console.log("Listed✅");
+  } catch (error) {
+    console.log(error.message);
+  }
+};
 
-const marketPlaceContract = await ethers.getContractFactory("NftMarketPlace");
-const deployedContract = await marketPlaceContract.deploy();
-const nftContract = await ethers.getContractFactory("MockERC721");
-const deployedNft = await nftContract.deploy("DOG", "DNFT");
-const mintTx = await deployedNft.mint();
-console.log("Minting.....");
-const mintTxReceipt = mintTx.wait(1);
-const tokenId = mintTxReceipt.events[0].args.tokenId;
-console.log("Approving....");
-const approvalTx = await nftContract.approve(deployedContract.target, tokenId);
-await approvalTx.wait(1);
+mintAndList();
+module.exports = mintAndList;
